@@ -10,4 +10,24 @@ public class PassbookEntry {
         this.date = date;
         this.amount = amount;
     }
+
+    public PassbookEntry() {
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getMemberId() {
+        return memberId;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
 }
+
