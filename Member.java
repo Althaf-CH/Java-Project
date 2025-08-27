@@ -10,4 +10,24 @@ public class Member {
         this.age = age;
         this.skill = skill;
     }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public String getSkill() {
+        return skill;
+    }
+
+    public void printSkill() {
+        System.out.println("Skill: " + getSkill());
+    }
 }
