@@ -1,0 +1,35 @@
+import java.sql.*;
+
+public class MemberRepository {
+
+    public void addMember(String name, int age, String skill) {
+        String sql = "INSERT INTO Members(name, age, skill) VALUES(?, ?, ?)";
+        try (Connection conn = DBHelper.connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, name);
+            pstmt.setInt(2, age);
+            pstmt.setString(3, skill);
+            pstmt.executeUpdate();
+            System.out.println("âœ… Member added successfully!");
+        } catch (SQLException e) {
+            System.out.println("âŒ Error adding member: " + e.getMessage());
+        }
+    }
+
+    public void viewMembers() {
+        String sql = "SELECT * FROM Members";
+        try (Connection conn = DBHelper.connect();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            System.out.println("\n--- Members List ---");
+            while (rs.next()) {
+                System.out.println(rs.getInt("id") + " | " +
+                                   rs.getString("name") + " | " +
+                                   rs.getInt("age") + " | " +
+                                   rs.getString("skill"));
+            }
+        } catch (SQLException e) {
+            System.out.println("âŒ Error viewing members: " + e.getMessage());
+        }
+    }
+}
