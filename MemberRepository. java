@@ -1,10 +1,12 @@
+
 import java.sql.*;
 
 public class MemberRepository {
 
     public void addMember(String name, int age, String skill) {
-        String sql = "INSERT INTO Members(name, age, skill) VALUES(?, ?, ?)";
-        try (Connection conn = DBHelper.connect();
+        String sql = "INSERT INTO Members (name, age, skill) VALUES (?, ?, ?)";
+        DBHelper dbHelper = new DBHelper();
+        try (Connection conn = dbHelper.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, name);
             pstmt.setInt(2, age);
@@ -15,21 +17,77 @@ public class MemberRepository {
             System.out.println("âŒ Error adding member: " + e.getMessage());
         }
     }
-
     public void viewMembers() {
-        String sql = "SELECT * FROM Members";
-        try (Connection conn = DBHelper.connect();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            System.out.println("\n--- Members List ---");
-            while (rs.next()) {
-                System.out.println(rs.getInt("id") + " | " +
-                                   rs.getString("name") + " | " +
-                                   rs.getInt("age") + " | " +
-                                   rs.getString("skill"));
-            }
-        } catch (SQLException e) {
-            System.out.println("âŒ Error viewing members: " + e.getMessage());
+    DBHelper dbHelper = new DBHelper();      
+    String sql = "SELECT member_id, name, age, skill FROM Members";
+
+    try (Connection conn = dbHelper.getConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet rs = stmt.executeQuery(sql)) {
+        System.out.println("\n--- Members List ---");
+        while (rs.next()) {
+            System.out.println(rs.getInt("member_id") + " | " +
+                               rs.getString("name") + " | " +
+                               rs.getInt("age") + " | " +
+                               rs.getString("skill"));
         }
+    } catch (SQLException e) {
+        System.out.println("âŒ Error viewing members: " + e.getMessage());
     }
+}
+
+    // ðŸ”¹ Update Member
+public void updateMember(int id, String name, int age, String skill) {
+    String sql = "UPDATE Members SET name=?, age=?, skill=? WHERE member_id=?";
+
+    DBHelper dbHelper = new DBHelper();
+    try (Connection conn = dbHelper.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        pstmt.setString(1, name);
+        pstmt.setInt(2, age);
+        pstmt.setString(3, skill);
+        pstmt.setInt(4, id);
+
+        int rows = pstmt.executeUpdate();
+        if (rows > 0) {
+            System.out.println("âœ… Member updated successfully!");
+        } else {
+            System.out.println("âš ï¸ No member found with ID " + id);
+        }
+    } catch (SQLException e) {
+        System.out.println("âŒ Error updating member: " + e.getMessage());
+    }
+}
+
+
+   
+    // ðŸ”¹ Delete Member
+    
+    
+    public void deleteMember(int id) {
+    String sql = "DELETE FROM Members WHERE member_id=?";
+    DBHelper dbHelper = new DBHelper();
+    try (Connection conn = dbHelper.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        pstmt.setInt(1, id);
+        int rows = pstmt.executeUpdate();
+
+        if (rows > 0) {
+            System.out.println("âŒ Member deleted!");
+
+            try ( // âœ… Reset auto-increment if table is empty
+                    Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS cnt FROM Members")) {
+                if (rs.next() && rs.getInt("cnt") == 0) {
+                    stmt.executeUpdate("DELETE FROM sqlite_sequence WHERE name='Members'");
+                }
+            }
+        } else {
+            System.out.println("âš ï¸ Member not found!");
+        }
+    } catch (SQLException e) {
+        System.out.println("âŒ Error deleting member: " + e.getMessage());
+    }
+}
+
+   
 }
