@@ -1,0 +1,140 @@
+import java.sql.*;
+
+public class PassbookRepository {
+    public void addEntry(int memberId, String date, double amount) {
+    // First check if the member exists
+    String checkSql = "SELECT COUNT(*) FROM Members WHERE member_id = ?";
+    String insertSql = "INSERT INTO Passbook (member_id, date, amount) VALUES (?, ?, ?)";
+
+    DBHelper dbHelper = new DBHelper();
+    try (Connection conn = dbHelper.getConnection();
+         PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
+
+        // check if the member exists
+        checkStmt.setInt(1, memberId);
+        ResultSet rs = checkStmt.executeQuery();
+        if (rs.next() && rs.getInt(1) == 0) {
+            System.out.println("❌ Cannot add entry: Member ID " + memberId + " does not exist.");
+            return; // stop here
+        }
+
+        // if member exists, insert entry
+        try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+            insertStmt.setInt(1, memberId);
+            insertStmt.setString(2, date);
+            insertStmt.setDouble(3, amount);
+            insertStmt.executeUpdate();
+            System.out.println("✅ Passbook entry added!");
+        }
+
+    } catch (SQLException e) {
+        System.out.println("❌ Error adding entry: " + e.getMessage());
+    }
+}
+
+
+   
+
+    public void viewEntries() {
+        String sql = "SELECT entry_id, member_id, date, amount FROM Passbook";
+        DBHelper dbHelper = new DBHelper();
+        try (Connection conn = dbHelper.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            System.out.println("\n--- Passbook Entries ---");
+            while (rs.next()) {
+                System.out.println(rs.getInt("entry_id") + " | Member: " +
+                                   rs.getInt("member_id") + " | " +
+                                   rs.getString("date") + " | " +
+                                   rs.getDouble("amount"));
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error viewing entries: " + e.getMessage());
+        }
+    }
+    // 🔹 Update Entry
+    public void updateEntry(int id, int newMemberId, String newDate, double newAmount) {
+        String sql = "UPDATE Passbook SET member_id=?, date=?, amount=? WHERE entry_id=?";
+        
+        DBHelper dbHelper = new DBHelper();
+        try (Connection conn = dbHelper.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, newMemberId);
+            pstmt.setString(2, newDate);
+            pstmt.setDouble(3, newAmount);
+            pstmt.setInt(4, id);
+            int rows = pstmt.executeUpdate();
+            if (rows > 0) System.out.println("✏️ Passbook entry updated!");
+            else System.out.println("⚠️ Passbook entry not found!");
+        } catch (SQLException e) {
+            System.out.println("❌ Error updating entry: " + e.getMessage());
+        }
+    }
+    // 🔹 Delete Entry
+    // 🔹 Delete Meeting
+    // 🔹 Delete Passbook Entry
+public void deleteEntry(int id) {
+    String sql = "DELETE FROM Passbook WHERE entry_id=?";
+    DBHelper dbHelper = new DBHelper();
+    try (Connection conn = dbHelper.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        pstmt.setInt(1, id);
+        int rows = pstmt.executeUpdate();
+
+        if (rows > 0) {
+            System.out.println("❌ Passbook entry deleted!");
+
+            try ( // ✅ Reset auto-increment if table is empty
+                    Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS cnt FROM Passbook")) {
+                if (rs.next() && rs.getInt("cnt") == 0) {
+                    stmt.executeUpdate("DELETE FROM sqlite_sequence WHERE name='Passbook'");
+                }
+                rs.close();
+            }
+        } else {
+            System.out.println("⚠️ Passbook entry not found!");
+        }
+    } catch (SQLException e) {
+        System.out.println("❌ Error deleting entry: " + e.getMessage());
+    }
+}
+
+   
+
+    
+    public void getTotalBalance() {
+        String sql = "SELECT SUM(amount) AS total FROM Passbook";
+         DBHelper dbHelper = new DBHelper();
+        try (Connection conn = dbHelper.getConnection();
+       
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                System.out.println("💰 Total Savings (All Members): ₹" + rs.getDouble("total"));
+            } else {
+                System.out.println("⚠️ No entries found.");
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error calculating balance: " + e.getMessage());
+        }
+    }
+
+    // 🔹 Get Balance of One Member
+    public void getMemberBalance(int memberId) {
+        String sql = "SELECT SUM(amount) AS total FROM Passbook WHERE member_id=?";
+         DBHelper dbHelper = new DBHelper();
+        try (Connection conn = dbHelper.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, memberId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                double total = rs.getDouble("total");
+                System.out.println("👤 Member " + memberId + " Total Savings: ₹" + total);
+            } else {
+                System.out.println("⚠️ No entries found for Member " + memberId);
+            }
+        } catch (SQLException e) {
+            System.out.println("❌ Error calculating member balance: " + e.getMessage());
+        }
+    }
+}
