@@ -1,5 +1,7 @@
-import java.sql.*;
 
+package repository;
+import helper.DBHelper;
+import java.sql.*;
 public class ProductRepository {
 
     public void addProduct(String name, double price, int quantity) {
@@ -38,26 +40,30 @@ public class ProductRepository {
     }
 
         // ðŸ”¹ Update Product
-        public void updateProduct(int product_id, String newName, double newPrice, int newQty) {
-           
-            String sql = "UPDATE Products SET name=?, price=?, quantity=? WHERE product_id=?";
-           DBHelper dbHelper = new DBHelper();
-        try (Connection conn = dbHelper.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setString(1, newName);
-                pstmt.setDouble(2, newPrice);
-                pstmt.setInt(3, newQty);
-                pstmt.setInt(4, product_id);
-                int affectedRows = pstmt.executeUpdate();
-                if (affectedRows > 0) {
-                    System.out.println("âœ… Product updated successfully!");
-                } else {
-                    System.out.println("âŒ No product found with the given ID.");
-                }
-            } catch (SQLException e) {
-                System.out.println("âŒ Error updating product: " + e.getMessage());
-            }
+      
+    public boolean updateProduct(int product_id, String newName, double newPrice, int newQty) {
+      String sql = "UPDATE Products SET name=?, price=?, quantity=? WHERE product_id=?";
+      DBHelper dbHelper = new DBHelper();
+    try (Connection conn = dbHelper.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        pstmt.setString(1, newName);
+        pstmt.setDouble(2, newPrice);
+        pstmt.setInt(3, newQty);
+        pstmt.setInt(4, product_id);
+
+        int affectedRows = pstmt.executeUpdate();
+        if (affectedRows > 0) {
+            System.out.println("âœ… Product updated successfully!");
+            return true;   // âœ… Updated
+        } else {
+            System.out.println("âŒ No product found with the given ID.");
+            return false;  // âŒ Not updated
         }
+    } catch (SQLException e) {
+        System.out.println("âŒ Error updating product: " + e.getMessage());
+        return false;
+    }
+}
     //Delete Product
     // ðŸ”¹ Delete Product
 public void deleteProduct(int productId) {
@@ -125,4 +131,8 @@ public void deleteProduct(int productId) {
             System.out.println("âŒ Error updating stock: " + e.getMessage());
         }
     }
-}    
+    // inside ProductRepository.java
+
+
+}
+    
