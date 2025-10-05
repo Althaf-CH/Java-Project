@@ -1,33 +1,132 @@
-import java.sql.*;
+package gui;
 
-public class MeetingRepository {
+import java.awt.*;
+import javax.swing.*;
+import repository.MeetingRepository;
 
-    public void addMeeting(String date, String description) {
-        String sql = "INSERT INTO Meetings(date, description) VALUES(?, ?)";
-        try (Connection conn = DBHelper.connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, date);
-            pstmt.setString(2, description);
-            pstmt.executeUpdate();
-            System.out.println("âœ… Meeting added successfully!");
-        } catch (SQLException e) {
-            System.out.println("âŒ Error adding meeting: " + e.getMessage());
-        }
+public class MeetingsWindow extends JFrame {
+    private final MeetingRepository meetingRepo = new MeetingRepository();
+
+    private final JTextArea outputArea = new JTextArea();
+    private final JTextField dateField = new JTextField(15);
+    private final JTextField descField = new JTextField(15);
+    private final JTextField idField = new JTextField(5);
+
+    public MeetingsWindow() {
+        setTitle("Meeting Manager");
+        setSize(700, 500);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        // ðŸ”¹ Top panel for input fields
+        JPanel inputPanel = new JPanel();
+        inputPanel.setLayout(new FlowLayout());
+        inputPanel.add(new JLabel("Meeting ID:"));
+        inputPanel.add(idField);
+        inputPanel.add(new JLabel("Date (YYYY-MM-DD):"));
+        inputPanel.add(dateField);
+        inputPanel.add(new JLabel("Description:"));
+        inputPanel.add(descField);
+        add(inputPanel, BorderLayout.NORTH);
+
+        // ðŸ”¹ Center panel for output area
+        outputArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        outputArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(outputArea);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // ðŸ”¹ Bottom panel for buttons
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout());
+
+        JButton addBtn = new JButton("Add");
+        JButton viewBtn = new JButton("View");
+        JButton updateBtn = new JButton("Update");
+        JButton deleteBtn = new JButton("Delete");
+
+        // Small buttons
+        Dimension smallBtn = new Dimension(80, 25);
+        addBtn.setPreferredSize(smallBtn);
+        viewBtn.setPreferredSize(smallBtn);
+        updateBtn.setPreferredSize(smallBtn);
+        deleteBtn.setPreferredSize(smallBtn);
+
+        buttonPanel.add(addBtn);
+        buttonPanel.add(viewBtn);
+        buttonPanel.add(updateBtn);
+        buttonPanel.add(deleteBtn);
+        add(buttonPanel, BorderLayout.SOUTH);
+
+        // ðŸ”¹ Button actions
+        addBtn.addActionListener(e -> {
+            String date = dateField.getText().trim();
+            String desc = descField.getText().trim();
+            if (!date.isEmpty() && !desc.isEmpty()) {
+                meetingRepo.addMeeting(date, desc);
+                outputArea.append("âœ… Meeting added: " + date + " | " + desc + "\n");
+                clearFields();
+            } else {
+                JOptionPane.showMessageDialog(this, "Please fill Date and Description!");
+            }
+        });
+     viewBtn.addActionListener(e -> {
+        outputArea.setText(""); // clear output area
+        outputArea.append("ðŸ“… Meetings:\n");
+      try {
+          meetingRepo.viewMeetingsForGUI(outputArea);
+      } catch (Exception ex) {
+        System.out.println("Error viewing meetings: " + ex.getMessage());
+        outputArea.append("Error viewing meetings: " + ex.getMessage() + "\n");
+      }
+      });
+
+        
+        updateBtn.addActionListener(e -> {
+            String idText = idField.getText().trim();
+            String date = dateField.getText().trim();
+            String desc = descField.getText().trim();
+            if (!idText.isEmpty() && !date.isEmpty() && !desc.isEmpty()) {
+                try {
+                    int id = Integer.parseInt(idText);
+                    meetingRepo.updateMeeting(id, date, desc);
+                    outputArea.append("âœï¸ Meeting updated: ID " + id + "\n");
+                    clearFields();
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "Meeting ID must be a number!");
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Please fill ID, Date, and Description!");
+            }
+        });
+
+        deleteBtn.addActionListener(e -> {
+            String idText = idField.getText().trim();
+            if (!idText.isEmpty()) {
+                try {
+                    int id = Integer.parseInt(idText);
+                    meetingRepo.deleteMeeting(id);
+                    outputArea.append("âŒ Meeting deleted: ID " + id + "\n");
+                    clearFields();
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "Meeting ID must be a number!");
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Please enter Meeting ID!");
+            }
+        });
+
+        setVisible(true);
     }
 
-    public void viewMeetings() {
-        String sql = "SELECT * FROM Meetings";
-        try (Connection conn = DBHelper.connect();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            System.out.println("\n--- Meetings List ---");
-            while (rs.next()) {
-                System.out.println(rs.getInt("id") + " | " +
-                                   rs.getString("date") + " | " +
-                                   rs.getString("description"));
-            }
-        } catch (SQLException e) {
-            System.out.println("âŒ Error viewing meetings: " + e.getMessage());
-        }
+    private void clearFields() {
+        idField.setText("");
+        dateField.setText("");
+        descField.setText("");
+    }
+
+    // ðŸ”¹ Main method for testing
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(MeetingsWindow::new);
     }
 }
